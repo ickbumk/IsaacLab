@@ -88,3 +88,4 @@ _build
 
 # Superpowers (Claude Code plugin artifacts)
 docs/superpowers/
+uv.lock

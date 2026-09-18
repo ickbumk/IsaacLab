@@ -157,3 +157,20 @@ If you use Isaac Lab in your research, please cite the technical report:
 
 Isaac Lab development initiated from the [Orbit](https://isaac-orbit.github.io/) framework.
 We gratefully acknowledge the authors of Orbit for their foundational contributions.
+
+
+
+
+## How to run the NBV
+To train
+
+
+```
+python ./scripts/reinforcement_learning/train.py --task Isaac-NBV-Direct-v0 --rl_library rl_games
+```
+
+To visualize
+
+```
+python ./scripts/reinforcement_learning/play.py --task Isaac-NBV-Direct-v0 --rl_library rl_games --viz kit --num_envs 16
+```

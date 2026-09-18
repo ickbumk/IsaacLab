@@ -8,7 +8,7 @@ from __future__ import annotations
 import torch
 import warp as wp
 
-from pxr import UsdGeom
+from pxr import UsdGeom, Gf
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation, RigidObject
@@ -17,7 +17,8 @@ from isaaclab.sim.utils.stage import get_current_stage
 from isaaclab.utils.math import combine_frame_transforms, quat_apply, quat_conjugate, sample_uniform
 from isaaclab.sim.utils.stage import get_current_stage
 
-from .utils import get_random_usd, replace_random_usd
+
+from .utils import get_random_usd, replace_random_usd, get_camera
 import numpy as np
 
 
@@ -48,58 +49,39 @@ class NBVEnv(DirectRLEnv):
             device=self.device,
         )
 
-        print("=" * 60)
-        print("NBV UR10e")
-        print("=" * 60)
-        print("Number of joints:", self._robot.num_joints)
-        print("Joint names:", self._robot.joint_names)
-
     def _setup_scene(self):
         # Robot
         self._robot = Articulation(self.cfg.robot)
         self.scene.articulations["robot"] = self._robot
-
-        # Terrain
-        # Same pattern as the working Franka environment
         self.cfg.terrain.num_envs = self.scene.cfg.num_envs
         self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
         self._terrain = self.cfg.terrain.class_type(self.cfg.terrain)
 
-        # # Load random .usd from GSO
-        # stage = get_current_stage()
-        # np.random.seed(None)
-        # self._object = get_random_usd(
-        #     stage,
-        #     "/home/asclab/projects/NBV/datasets/gso_usd",
-        #     "/World/envs/env_0/MyModel",
-        # )
-
-        # Now create one GSO per environment
         stage = get_current_stage()
 
-        self._objects = []
+        self._camera = get_camera(stage)
 
+
+
+        
+        self._objects = []
+        self._cameras = []
         for env_id in range(self.num_envs):
             prim_path = f"/World/envs/env_{env_id}/MyModel"
-
             obj = get_random_usd(
                 stage,
                 "/home/asclab/projects/NBV/datasets/gso_usd",
                 prim_path,
             )
-
+            
             self._objects.append(obj)
 
-        # Clone environments
         self.scene.clone_environments(copy_from_source=False)
-
-        # CPU collision filtering
         if self.device == "cpu":
             self.scene.filter_collisions(
                 global_prim_paths=[self.cfg.terrain.prim_path]
             )
 
-        # Light
         light_cfg = sim_utils.DomeLightCfg(
             intensity=2000.0,
             color=(0.75, 0.75, 0.75),
@@ -154,16 +136,7 @@ class NBVEnv(DirectRLEnv):
 
         super()._reset_idx(env_ids)
 
-        # Reset object
-
         stage = get_current_stage()
-
-        # replace_random_usd(
-        #     stage,
-        #     "/home/asclab/projects/NBV/datasets/gso_usd",
-        #     self._object,
-        # )
-
         for env_id in env_ids.tolist():
             replace_random_usd(
                 stage,
@@ -171,7 +144,6 @@ class NBVEnv(DirectRLEnv):
                 self._objects[env_id],
             )
 
-        # Reset UR10e to configured default pose
         joint_pos = self._robot.data.default_joint_pos.torch[env_ids]
         joint_vel = torch.zeros_like(joint_pos)
 

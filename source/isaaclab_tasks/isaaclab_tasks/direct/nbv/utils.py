@@ -3,6 +3,7 @@ import os
 import gc
 import omni.usd
 import open3d as o3d
+from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 from pxr import Sdf, UsdLux
 from pxr import Usd, UsdGeom, Gf, UsdPhysics
 from pxr import Sdf
@@ -83,14 +84,7 @@ def replace_random_usd(stage, usd_parent, model_prim):
         model + ".usd",
     )
 
-    print("=" * 60)
-    print("RANDOM GSO RESET")
-    print("Model:", model)
-    print("=" * 60)
-
-    # --------------------------------------------------
     # Get existing scale operation
-    # --------------------------------------------------
     xform = UsdGeom.Xformable(model_prim)
 
     scale_op = None
@@ -147,15 +141,7 @@ def replace_random_usd(stage, usd_parent, model_prim):
     if scale > 1.0:
         scale = np.floor(scale)
 
-    print("min:", min_bound)
-    print("max:", max_bound)
-    print("dimensions:", dimensions)
-    print("largest dimension:", largest_dimension)
-    print("scale:", scale)
-
-    # --------------------------------------------------
     # Apply new scale
-    # --------------------------------------------------
     scale_op.Set(
         Gf.Vec3f(
             float(scale),
@@ -164,9 +150,7 @@ def replace_random_usd(stage, usd_parent, model_prim):
         )
     )
 
-    # --------------------------------------------------
     # Re-apply collision API to new meshes
-    # --------------------------------------------------
     for prim in Usd.PrimRange(model_prim):
 
         if prim.IsA(UsdGeom.Mesh):
@@ -178,3 +162,37 @@ def replace_random_usd(stage, usd_parent, model_prim):
             mesh_collision_api.CreateApproximationAttr("none")
 
     return model_prim
+
+
+def get_camera(stage):
+    d555_path = (
+            f"{ISAAC_NUCLEUS_DIR}/Sensors/RealSense/D555/rsd555.usd"
+        )
+
+    ee_path = "/World/envs/env_0/UR10e/wrist_3_link"
+    camera_path = ee_path + "/D555"
+
+    camera_mount = stage.DefinePrim(camera_path, "Xform")
+    camera_mount.GetReferences().AddReference(d555_path)
+
+    xform = UsdGeom.Xformable(camera_mount)
+
+    translate_op = None
+    rotate_op = None
+
+    for op in xform.GetOrderedXformOps():
+        if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
+            translate_op = op
+        elif op.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ:
+            rotate_op = op
+
+    if translate_op is None:
+        translate_op = xform.AddTranslateOp()
+
+    if rotate_op is None:
+        rotate_op = xform.AddRotateXYZOp()
+
+    translate_op.Set(Gf.Vec3d(0.0, 0.0, 0.04))
+    rotate_op.Set(Gf.Vec3f(0.0, 90.0, 0.0))
+
+    return camera_mount

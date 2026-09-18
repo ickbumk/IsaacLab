@@ -57,9 +57,7 @@ class NBVEnvCfg(DirectRLEnvCfg):
     robot = ArticulationCfg(
         prim_path="/World/envs/env_.*/UR10e",
         spawn=sim_utils.UsdFileCfg(
-            usd_path=(
-                f"{ISAAC_NUCLEUS_DIR}/Robots/UniversalRobots/ur10e/ur10e.usd"
-            ),
+            usd_path=f"{ISAAC_NUCLEUS_DIR}/Robots/UniversalRobots/ur10e/ur10e.usd",
             activate_contact_sensors=False,
             rigid_props=sim_utils.RigidBodyPropertiesCfg(
                 disable_gravity=False,
@@ -112,30 +110,15 @@ class NBVEnvCfg(DirectRLEnvCfg):
         ),
     )
 
-    # random object
-    # usd_parent = "/home/asclab/projects/NBV/datasets/gso_usd"
-    # models = os.listdir(usd_parent)
-    # model_name = np.random.choice(models)
-    # model_path = os.path.join(usd_parent, model_name, model_name + ".usd")
-
-    # random_object = RigidObjectCfg(
-    #     prim_path="/World/envs/env_.*/MyModel",
+    # camera = RigidObjectCfg(
+    #     prim_path="/World/envs/env_.*/UR10e/wrist_3_link/D555",
     #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path=model_path,
-    #         activate_contact_sensors=False,
-    #         rigid_props=sim_utils.RigidBodyPropertiesCfg(
-    #             disable_gravity=False,
-    #             max_depenetration_velocity=5.0,
-    #         ),
+    #         usd_path = f"{ISAAC_NUCLEUS_DIR}/Sensors/RealSense/D555/rsd555.usd",
     #     ),
-    #     init_state = RigidObjectCfg.InitialStateCfg(
-    #         pos=(0.0, 0.0, 0.0),
-    #         rot=(0.0, 0.0, 1.0, 0.0)
+    #     init_state=RigidObjectCfg.InitialStateCfg(
+    #         pos = (0.0, 0.04, 0.0),
+    #         rot=(0.7071, 0.0, 0.7071, 0.0),
     #     ),
     # )
-
     action_scale = 7.5
     dof_velocity_scale = 0.1
-
-    # print(self.robot.num_joints)
-    # print(self.robot.joint_names)
